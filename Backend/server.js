@@ -53,14 +53,15 @@ io.on('connection', (socket) => {
 
   socket.on('setup', (userdata) => {
     socket.join(userdata._id);
+    socket.emit("connected")
   })
 
   socket.on("join chat", (chat_id) => {
     socket.join(chat_id);
-    console.log("User Joined Room: " + chat_id);
+    // console.log("User Joined Room: " + chat_id);
   });
-  socket.on("typing", (room) => socket.in(room).emit("typing"));
-  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+  socket.on("typing", (chat_id) => socket.in(chat_id).emit("typing"));
+  socket.on("stop typing", (chat_id) => socket.in(chat_id).emit("stop typing"));
 
   socket.on("new message", (newMessageRecieved) => {
     var chat = newMessageRecieved.chat;
@@ -76,5 +77,6 @@ io.on('connection', (socket) => {
 
   socket.off("setup", () => {
     socket.leave(userData._id);
+    console.log("Dissconnected")
   });
 });

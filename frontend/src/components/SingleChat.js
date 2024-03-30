@@ -19,7 +19,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     const [NewMessage, setNewMessage] = useState("");
     const [SocketConnected, setSocketConnected] = useState(false);
     const [Typing, setTyping] = useState(false);
-    const [istyping, setistyping] = useState(false);
+    const [Istyping, setIstyping] = useState(false);
     const toast = useToast();
 
     const FetchMessages = async () => {
@@ -56,13 +56,14 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     const SendMessage = async (event) => {
       if (event.key === "Enter" && NewMessage) {
       try {
+        setTyping(false)
+        socket.emit("stop typing",SelectedChat._id)
         const config = {
           headers: {
             "Content-type": "application/json",
             Authorization: `Bearer ${User.token}`,
           },
         };
-        setNewMessage("");
         const { data } = await axios.post(
           "http://localhost:5000/message",
           {
@@ -71,6 +72,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           },
           config
         );
+        setNewMessage("");
         setMessages([...Messages, data]);
         socket.emit("new message", data);
       } catch (error) {
@@ -86,8 +88,22 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     }
     }
     const TypingHandler = (message) => {
+
       setNewMessage(message)
-      //Sending Message so pop in reciever chat   
+      setTyping(true);
+      socket.emit("typing",SelectedChat._id);
+
+      let lastTypingTime = new Date().getTime();
+      var timerLength = 3000;
+      setTimeout(() => {
+        var timeNow = new Date().getTime();
+        var timeDiff = timeNow - lastTypingTime;
+        if (timeDiff >= timerLength && Typing) {
+          socket.emit("stop typing", SelectedChat._id);
+          setTyping(false);
+        }
+    }, timerLength);
+
     }
 
     useEffect(() => {
@@ -95,15 +111,21 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     }, [SelectedChat] );
 
     useEffect(() => {
+      
+      socket.on("typing", () => setIstyping(true));
+      socket.on("stop typing", () => setIstyping(false));
+      
+      socket.emit("setup", User);
+      
       socket.on("message recieved", (newMessageRecieved) => {
         if ( !SelectedChat || SelectedChat._id !== newMessageRecieved.chat._id ) {
           //notification
         } else {
         setMessages([...Messages, newMessageRecieved]);
       }
-      })
+      });
+      
     })
-    
     
   return (
       <>
@@ -165,9 +187,8 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
                 </div>
                 )}
                 <FormControl onKeyDown={SendMessage} id="first-name" isRequired mt={3}>
-                {istyping ? (
-                  <div>
-                  </div>
+                {Istyping ? (
+                  <div>loading...</div>
                   ) : (
                     <></>
                   )}
