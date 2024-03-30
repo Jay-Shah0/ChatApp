@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { ChatState } from '../Context/ChatProvider';
+import { socket } from '../socket';
 import { Box, FormControl, IconButton, Input, Spinner, Text, useToast } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { getSender, getSenderFull } from '../config/ChatLogics';
@@ -21,8 +22,6 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     const [istyping, setistyping] = useState(false);
     const toast = useToast();
 
-    const Endpoint = "http://localhost:5000";
-
     const FetchMessages = async () => {
       if (!SelectedChat) return;
 
@@ -40,7 +39,8 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           config
         );
         setMessages(data);
-        setloading(false); 
+        socket.emit("join chat", SelectedChat._id);
+        setloading(false);
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -72,6 +72,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           config
         );
         setMessages([...Messages, data]);
+        socket.emit("new message", data);
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -92,6 +93,17 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     useEffect(() => {
       FetchMessages();
     }, [SelectedChat] );
+
+    useEffect(() => {
+      socket.on("message recieved", (newMessageRecieved) => {
+        if ( !SelectedChat || SelectedChat._id !== newMessageRecieved.chat._id ) {
+          //notification
+        } else {
+        setMessages([...Messages, newMessageRecieved]);
+      }
+      })
+    })
+    
     
   return (
       <>

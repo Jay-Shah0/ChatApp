@@ -12,7 +12,13 @@ const { Socket } = require("dgram");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); 
+const io = new Server(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+    // credentials: true,
+  },
+  }); 
 
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -44,4 +50,31 @@ server.listen(PORT, () => {
 
 io.on('connection', (socket) => {
   console.log('A user connected',socket.id);
+
+  socket.on('setup', (userdata) => {
+    socket.join(userdata._id);
+  })
+
+  socket.on("join chat", (chat_id) => {
+    socket.join(chat_id);
+    console.log("User Joined Room: " + chat_id);
+  });
+  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
+  socket.on("new message", (newMessageRecieved) => {
+    var chat = newMessageRecieved.chat;
+
+    if (!chat.users) return console.log("chat.users not defined");
+
+    chat.users.forEach((user) => {
+      if (user._id == newMessageRecieved.sender._id) return;
+
+      socket.in(user._id).emit("message recieved", newMessageRecieved);
+    });
+  });
+
+  socket.off("setup", () => {
+    socket.leave(userData._id);
+  });
 });
