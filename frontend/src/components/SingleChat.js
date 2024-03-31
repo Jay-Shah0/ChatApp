@@ -21,6 +21,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     const [Typing, setTyping] = useState(false);
     const [Istyping, setIstyping] = useState(false);
     const toast = useToast();
+    const [PreviousChatId, setPreviousChatId] = useState("")
 
     const FetchMessages = async () => {
       if (!SelectedChat) return;
@@ -31,7 +32,6 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
             Authorization: `Bearer ${User.token}`,
           },
         };
-
         setloading(true);
 
         const { data } = await axios.get(
@@ -39,7 +39,6 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           config
         );
         setMessages(data);
-        socket.emit("join chat", SelectedChat._id);
         setloading(false);
       } catch (error) {
         toast({
@@ -89,6 +88,8 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     }
     const TypingHandler = (message) => {
 
+      if(!SocketConnected) return;
+
       setNewMessage(message)
       setTyping(true);
       socket.emit("typing",SelectedChat._id);
@@ -106,26 +107,47 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
 
     }
 
+    // all douts clear but why this event lisner on all time after first render also
+
+    useEffect(() => {
+    socket.emit("setup", User);
+    socket.on("connected", () => setSocketConnected(true));
+    socket.on("typing", () => setIstyping(true));
+    socket.on("stop typing", () => setIstyping(false));
+    }, [User])
+
+    
     useEffect(() => {
       FetchMessages();
+      if (SelectedChat && SelectedChat._id !== PreviousChatId) {
+        socket.emit("join chat", SelectedChat._id);
+      }
+
+      if (PreviousChatId) {
+        socket.emit("leave chat", PreviousChatId);
+      }
+
+      setPreviousChatId(SelectedChat ? SelectedChat._id : null);
+
+      return () => {
+        if (SelectedChat) {
+          socket.emit("leave chat", SelectedChat._id);
+        }
+      };
     }, [SelectedChat] );
 
     useEffect(() => {
       
-      socket.on("typing", () => setIstyping(true));
-      socket.on("stop typing", () => setIstyping(false));
-      
-      socket.emit("setup", User);
-      
       socket.on("message recieved", (newMessageRecieved) => {
         if ( !SelectedChat || SelectedChat._id !== newMessageRecieved.chat._id ) {
-          //notification
+          return;
         } else {
-        setMessages([...Messages, newMessageRecieved]);
-      }
+          setMessages([...Messages, newMessageRecieved]);
+        }
       });
       
     })
+  
     
   return (
       <>

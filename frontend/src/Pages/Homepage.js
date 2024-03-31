@@ -15,7 +15,7 @@ import Signup from "../components/Authentication/Signup";
 import { ChatState } from "../Context/ChatProvider";
 
 function Homepage() {
-  const { setUser } = ChatState(); // Accessing setUser from ChatProvider
+  const { setUser } = ChatState();
   const history = useHistory();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ function Homepage() {
   return (
     <Container maxW="xl" centerContent>
       <Box
-       display="flex"
+      display="flex"
         justifyContent="center"
         p={3}
         bg="white"

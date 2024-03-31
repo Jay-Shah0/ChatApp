@@ -53,11 +53,15 @@ io.on('connection', (socket) => {
 
   socket.on('setup', (userdata) => {
     socket.join(userdata._id);
-    socket.emit("connected")
+    socket.emit("connected");
   })
 
   socket.on("join chat", (chat_id) => {
     socket.join(chat_id);
+    // console.log("User Joined Room: " + chat_id);
+  });
+  socket.on("leave chat", (chat_id) => {
+    socket.leave(chat_id);
     // console.log("User Joined Room: " + chat_id);
   });
   socket.on("typing", (chat_id) => socket.in(chat_id).emit("typing"));
