@@ -8,7 +8,6 @@ const { notFound, errorHandler } = require("./middleware/ErrorMiddleware");
 const cors = require('cors');
 const http = require('http'); // Import the HTTP module
 const { Server } = require('socket.io');
-const { Socket } = require("dgram");
 
 const app = express();
 const server = http.createServer(app);

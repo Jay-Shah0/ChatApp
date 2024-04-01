@@ -2,7 +2,6 @@ const asyncHandler = require("express-async-handler");
 const Message = require("..//Model/MessageModel");
 const User = require("..//Model/UserModel");
 const Chat = require("..//Model/ChatModel");
-const expressAsyncHandler = require("express-async-handler");
 
 const allMessages = asyncHandler(async (req, res) => {
   try {
@@ -49,4 +48,26 @@ const sendMessage = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { allMessages, sendMessage };
+const messageRead = asyncHandler(async (req, res) => {
+  try {
+    const { chatId } = req.body;
+    const userId = req.user._id;
+
+    const chat = await Chat.findOne({ _id: chatId, users: userId });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found or user not a participant" });
+    }
+
+    await Message.updateMany(
+      { chat: chatId, sender: { $ne: userId } }, 
+      { $addToSet: { readBy: userId } } 
+    );
+    res.status(200).json({ message: "Read status updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  } 
+});
+
+module.exports = { allMessages, sendMessage, messageRead };

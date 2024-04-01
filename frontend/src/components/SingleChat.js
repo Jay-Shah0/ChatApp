@@ -50,6 +50,37 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           position: "bottom",
         });
       }
+
+      StatusUpdate();
+    }
+
+    const StatusUpdate = async () => {
+      if (!SelectedChat) return;
+      try {
+        const config = {
+          headers: {
+            "Content-type": "application/json",
+            Authorization: `Bearer ${User.token}`,
+          },
+        };
+        const { data } = await axios.put(
+          "http://localhost:5000/message/readressage",
+          {
+            chatId: SelectedChat,
+          },
+          config
+        );
+        console.log(data)
+      } catch (error) {
+        toast({
+          title: "Error Occured!",
+          description: "Failed to Update Status",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom",
+        });
+      }
     }
 
     const SendMessage = async (event) => {
@@ -142,6 +173,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
         if ( !SelectedChat || SelectedChat._id !== newMessageRecieved.chat._id ) {
           return;
         } else {
+          StatusUpdate();
           setMessages([...Messages, newMessageRecieved]);
         }
       });
