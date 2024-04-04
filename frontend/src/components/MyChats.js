@@ -99,11 +99,17 @@ const MyChats = ({ fetchAgain }) => {
                 borderRadius="lg"
                 key={chat._id}
               >
-                <Text>
+                <Text fontSize="md" mt={2} color="#2D3748" fontWeight="bold">
                   {!chat.isGroupChat
                     ? getSender(loggedUser, chat.users)
                     : chat.chatName}
                 </Text>
+                {chat.latestMessage && (
+                    <Text fontSize="sm" mt={2} color="#4A5568">
+                      <span style={{ fontWeight: 'bold', marginRight: '5px' }}>{chat.latestMessage.sender.name}:</span>
+                      <span>{chat.latestMessage.content}</span>
+                    </Text>
+                )}
               </Box>
             ))}
           </Stack>

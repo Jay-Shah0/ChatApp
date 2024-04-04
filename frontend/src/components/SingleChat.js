@@ -70,7 +70,6 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           },
           config
         );
-        console.log(data)
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -117,6 +116,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
       }
     }
     }
+
     const TypingHandler = (message) => {
 
       if(!SocketConnected) return;
@@ -145,7 +145,10 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     socket.on("connected", () => setSocketConnected(true));
     socket.on("typing", () => setIstyping(true));
     socket.on("stop typing", () => setIstyping(false));
-    }, [User])
+    return () => {
+      socket.off("connected", () => setSocketConnected(false))
+    };
+    }, [])
 
     
     useEffect(() => {
@@ -178,7 +181,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
         }
       });
       
-    })
+    },)
   
     
   return (
