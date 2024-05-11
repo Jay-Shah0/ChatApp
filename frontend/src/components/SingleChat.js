@@ -148,7 +148,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
     return () => {
       socket.off("connected", () => setSocketConnected(false))
     };
-    }, [])
+    }, [User])
 
     
     useEffect(() => {
@@ -180,8 +180,7 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
           setMessages([...Messages, newMessageRecieved]);
         }
       });
-      
-    },)
+    })
   
     
   return (
