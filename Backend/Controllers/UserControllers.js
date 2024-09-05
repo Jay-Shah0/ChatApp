@@ -1,77 +1,92 @@
 const asyncHandler = require("express-async-handler");
-const User = require('../Model/UserModel');
-const GenerateToken = require('../Config/GenerateToken');
+const User = require("../Model/UserModel");
+const GenerateToken = require("../Config/GenerateToken");
 const expressAsyncHandler = require("express-async-handler");
 
+// Regular expression for email validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const RegisterUser = asyncHandler (async (req,res) => {
-    const { name, email, password, pic } = req.body
+const RegisterUser = asyncHandler(async (req, res) => {
+	const { name, email, password, pic } = req.body;
 
-    if(!name || !email || !password){
-        res.status(400);
-        throw new Error("Please Enter all the Feild",);
-    }
+	if (!name || !email || !password) {
+		res.status(400);
+		throw new Error("Please Enter all the Fields");
+	}
 
-    const  UserExist = await User.findOne({ email });
+	// Check if email is valid
+	if (!emailRegex.test(email)) {
+		res.status(400);
+		throw new Error("Invalid Email Address");
+	}
 
-    if(UserExist){
-        res.status(400);
-        throw new Error("User already exists");
-    }
+	const UserExist = await User.findOne({ email });
 
-    const user = await User.create({
-        name,
-        email, 
-        password, 
-        pic,
-    });
+	if (UserExist) {
+		res.status(400);
+		throw new Error("User already exists");
+	}
 
-    if (user) {
-        res.status(200).json({
-             _id: user._id,
-            name: user.name,
-            email: user.email,
-            pic: user.pic,
-            token: GenerateToken(user._id),
-    });
-    } else {
-        res.status(400);
-        throw new Error("Failed to create new user");
-    }
+	const user = await User.create({
+		name,
+		email,
+		password,
+		pic,
+	});
+
+	if (user) {
+		res.status(200).json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
+			pic: user.pic,
+			token: GenerateToken(user._id),
+		});
+	} else {
+		res.status(400);
+		throw new Error("Failed to create new user");
+	}
 });
 
 const AuthUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+	const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+	// Check if email is valid
+	if (!emailRegex.test(email)) {
+		res.status(400);
+		throw new Error("Invalid Email Address");
+	}
 
-  if (user && (await user.matchPassword(password))) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      pic: user.pic,
-      token:GenerateToken(user._id),
-    });
-  } else {
-    res.status(400);
-    throw new Error("Invalid Email or Password");
-  }
+	const user = await User.findOne({ email });
+
+	if (user && (await user.matchPassword(password))) {
+		res.json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
+			pic: user.pic,
+			token: GenerateToken(user._id),
+		});
+	} else {
+		res.status(400);
+		throw new Error("Invalid Email or Password");
+	}
 });
-
 
 const SearchUser = expressAsyncHandler(async (req, res) => {
-  const searchQuery = req.query.search;
-  const userQuery = searchQuery ? { 
-    $or: [
-      { name: { $regex: searchQuery, $options: "i" } }, // Match anywhere in name
-      { email: { $regex: searchQuery, $options: "i" } } // Match anywhere in email
-    ]
-  } : {};
+	const searchQuery = req.query.search;
+	const userQuery = searchQuery
+		? {
+				$or: [
+					{ name: { $regex: searchQuery, $options: "i" } },
+					{ email: { $regex: searchQuery, $options: "i" } },
+				],
+		  }
+		: {};
 
-  const users = await User.find(userQuery);
-  res.send(users);
+	const users = await User.find(userQuery);
+	res.send(users);
 });
 
 
-module.exports = { RegisterUser,AuthUser,SearchUser };
+module.exports = { RegisterUser, AuthUser, SearchUser };

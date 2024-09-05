@@ -13,7 +13,7 @@ const UserListItem = ({ handleFunction,user }) => {
         color: "white",
       }}
       w="100%"
-      d="flex"
+      display="flex"
       alignItems="center"
       color="black"
       px={3}
@@ -24,8 +24,6 @@ const UserListItem = ({ handleFunction,user }) => {
       <Avatar
         mr={2}
         size="sm"
-        cursor="pointer"
-        name={user.name}
         src={user.pic}
       />
       <Box>

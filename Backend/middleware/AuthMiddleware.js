@@ -12,7 +12,6 @@ const protect = asyncHandler(async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      //decodes token id
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       req.user = await User.findById(decoded.id).select("-password");
@@ -38,4 +37,24 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-module.exports = { protect };
+
+const checkTokenExpiry = (req, res) => {
+	// Get token from headers
+	const token = req.header("Authorization")?.replace("Bearer ", "");
+
+	if (!token) {
+		return res.status(401).json({ message: "No token, authorization denied" });
+	}
+
+	try {
+		// Verify token
+		jwt.verify(token, process.env.JWT_SECRET);
+		// If token is valid
+		res.status(200).json({ message: "Token is valid" });
+	} catch (err) {
+		// If token is not valid, it has expired or is invalid
+		res.status(401).json({ message: "Token has expired" });
+	}
+};
+
+module.exports = { protect, checkTokenExpiry };

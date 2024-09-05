@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { ChatState } from '../Context/ChatProvider';
 import { socket } from '../socket';
 import { Box, FormControl, IconButton, Input, Spinner, Text, useToast } from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
+import { ArrowBackIcon, ArrowRightIcon } from '@chakra-ui/icons';
 import { getSender, getSenderFull } from '../config/ChatLogics';
 import ProfileModal from "./miscellaneous/ProfileModal";
 import UpdateGroupChatModal from './miscellaneous/UpdateGroupChatModal';
@@ -82,40 +82,57 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
       }
     }
 
-    const SendMessage = async (event) => {
-      if (event.key === "Enter" && NewMessage) {
+    const SendMessage = async () => {
       try {
-        setTyping(false)
-        socket.emit("stop typing",SelectedChat._id)
-        const config = {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${User.token}`,
-          },
-        };
-        const { data } = await axios.post(
-          "http://localhost:5000/message",
-          {
-            content: NewMessage,
-            chatId: SelectedChat,
-          },
-          config
-        );
-        setNewMessage("");
-        setMessages([...Messages, data]);
-        socket.emit("new message", data);
-      } catch (error) {
-        toast({
-          title: "Error Occured!",
-          description: "Failed to send the Message",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-          position: "bottom",
-        });
-      }
+				setTyping(false);
+				socket.emit("stop typing", SelectedChat._id);
+				const config = {
+					headers: {
+						"Content-type": "application/json",
+						Authorization: `Bearer ${User.token}`,
+					},
+				};
+				const { data } = await axios.post(
+					"http://localhost:5000/message",
+					{
+						content: NewMessage,
+						chatId: SelectedChat,
+					},
+					config
+				);
+				setNewMessage("");
+				setMessages([...Messages, data]);
+				socket.emit("new message", data);
+			} catch (error) {
+				toast({
+					title: "Error Occured!",
+					description: "Failed to send the Message",
+					status: "error",
+					duration: 5000,
+					isClosable: true,
+					position: "bottom",
+				});
+			}
     }
+
+    const handleKeyDown = async (event) => {
+			if (event.key === "Enter") {
+				if (event.shiftKey) {
+					setNewMessage((prev) => prev + "\n"); 
+				} else {
+					if (NewMessage) {
+						SendMessage();
+					}
+				}
+			}
+		};
+
+
+    const handleSendMessage = async () => {
+    if (NewMessage) {
+      await SendMessage();
     }
+  };
 
     const TypingHandler = (message) => {
 
@@ -138,7 +155,6 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
 
     }
 
-    // all douts clear but why this event lisner on all time after first render also
 
     useEffect(() => {
     socket.emit("setup", User);
@@ -184,91 +200,97 @@ const SingleChat = ( { fetchAgain, setfetchAgain } ) => {
   
     
   return (
-      <>
-        {SelectedChat ? (
-            <>
-              <Text
-              fontSize={{ base: "28px", md: "30px" }}
-              pb={3}
-              px={2}
-              w="100%"
-              fontFamily="Work sans"
-              display="flex"
-              justifyContent={{ base: "space-between" }}
-              alignItems="center"
-              >
-                <IconButton
-                icon={<ArrowBackIcon />}
-                onClick={() => setSelectedChat("")}
-                />
-                {!SelectedChat.isGroupChat ? (
-                <>
-                  {getSender(User, SelectedChat.users)}
-                  <ProfileModal
-                  user={getSenderFull(User, SelectedChat.users)}
-                  />
-                </>
-              ) : (
-                <>
-                  {SelectedChat.chatName.toUpperCase()}
-                  <UpdateGroupChatModal
-                    fetchAgain={fetchAgain}
-                    setfetchAgain={setfetchAgain}
-                  />
-                </>
-              )}
-              </Text>
-              <Box
+		<>
+			{SelectedChat ? (
+				<>
+					<Text
+						fontSize={{ base: "28px", md: "30px" }}
+						pb={3}
+						px={2}
+						w="100%"
+						fontFamily="Work sans"
+						display="flex"
+						justifyContent={{ base: "space-between" }}
+						alignItems="center"
+					>
+						<IconButton
+							icon={<ArrowBackIcon />}
+							onClick={() => setSelectedChat("")}
+						/>
+						{!SelectedChat.isGroupChat ? (
+							<>
+								{getSender(User, SelectedChat.users)}
+								<ProfileModal user={getSenderFull(User, SelectedChat.users)} />
+							</>
+						) : (
+							<>
+								{SelectedChat.chatName.toUpperCase()}
+								<UpdateGroupChatModal
+									fetchAgain={fetchAgain}
+									setfetchAgain={setfetchAgain}
+								/>
+							</>
+						)}
+					</Text>
+					<Box
+						display="flex"
+						flexDir="column"
+						justifyContent="flex-end"
+						p={3}
+						bg="#E8E8E8"
+						w="100%"
+						h="100%"
+						borderRadius="lg"
+						overflowY="hidden"
+					>
+						{loading ? (
+							<Spinner
+								size="xl"
+								w={20}
+								h={20}
+								alignSelf="center"
+								margin="auto"
+							/>
+						) : (
+							<div className="messages">
+								<ScrollableChat Messages={Messages} />
+							</div>
+						)}
+						<FormControl
+							onKeyDown={handleKeyDown}
+							id="first-name"
+							isRequired
+							mt={3}
+						>
+							{Istyping ? <div>loading...</div> : <></>}
+							<Box
                 display="flex"
-                flexDir="column"
-                justifyContent="flex-end"
-                p={3}
-                bg="#E8E8E8"
-                w="100%"
-                h="100%"
-                borderRadius="lg"
-                overflowY="hidden"
               >
-                {loading ? (
-                <Spinner
-                  size="xl"
-                  w={20}
-                  h={20}
-                  alignSelf="center"
-                  margin="auto"
-                />
-              ) : (
-                <div className="messages">
-                  <ScrollableChat Messages={Messages} />
-                </div>
-                )}
-                <FormControl onKeyDown={SendMessage} id="first-name" isRequired mt={3}>
-                {Istyping ? (
-                  <div>loading...</div>
-                  ) : (
-                    <></>
-                  )}
-                  <Input
-                    variant="filled"
-                    bg="#E0E0E0"
-                    placeholder="Enter a message.."
-                    value={NewMessage}
-                    onChange={(e) => TypingHandler(e.target.value)}
-                  />
-                </FormControl>
-              </Box>
-
-            </>
-        ) : (
-            <Box>
-                <Text fontSize="3xl" pb={3} fontFamily="Work sans">
-                    Click on User to start Chating
-                </Text>
-            </Box>
-        )}
-
-      </>
-  )
+								<Input
+									variant="filled"
+									bg="#E0E0E0"
+									placeholder="Enter a message.."
+									value={NewMessage}
+									onChange={(e) => TypingHandler(e.target.value)}
+								/>
+								<IconButton
+									icon={<ArrowRightIcon />}
+									onClick={handleSendMessage}
+									ml={2}
+								/>
+							</Box>
+						</FormControl>
+					</Box>
+				</>
+			) : (
+				<Box>
+					<Text fontSize="3xl" pb={3} fontFamily="Work sans">
+						Click on User to start Chating
+					</Text>
+				</Box>
+			)}
+		</>
+	);
 };
 
 
