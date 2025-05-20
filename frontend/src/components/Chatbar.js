@@ -16,7 +16,7 @@ const Chatbar = ({ loggedUser, chat }) => {
 
 	useEffect(() => {
 		socket.on("message recieved", (newMessageReceived) => {
-			if (chat._id === newMessageReceived.chat._id) {
+			if (chat._id === newMessageReceived.chat._id && SelectedChat !== chat) {
 				setNewMessageCounts((prevCount) => prevCount + 1);
 				setLatestMessage(newMessageReceived);
 			}
@@ -24,7 +24,7 @@ const Chatbar = ({ loggedUser, chat }) => {
 		return () => {
 			socket.off("message recieved");
 		};
-	}, [chat._id]);
+	}, [SelectedChat, chat]);
 
 	return (
 		<Box
@@ -51,7 +51,7 @@ const Chatbar = ({ loggedUser, chat }) => {
 					textOverflow="ellipsis"
 				>
 					<span style={{ fontWeight: "bold", marginRight: "5px" }}>
-						{latestMessage.sender.name}:
+						{chat.isGroupChat && (latestMessage.sender.name + ":")}
 					</span>
 					<span>{latestMessage.content}</span>
 				</Text>
